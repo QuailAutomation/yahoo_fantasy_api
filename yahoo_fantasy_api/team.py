@@ -70,7 +70,7 @@ class Team:
                                                          week=week, day=day))
         it = t.execute('''
                         $..(player_id,full,position_type,eligible_positions,
-                            selected_position,status)''')
+                            selected_position, status,editorial_team_abbr)''')
 
         def _compact_selected_pos(j):
             return j["selected_position"][1]["position"]
@@ -86,13 +86,16 @@ class Team:
             while True:
                 plyr = {"player_id": int(next(it)["player_id"]),
                         "name": next(it)["full"]}
+
                 next_item = next(it)
                 plyr["status"] = next_item["status"] \
                     if "status" in next_item else ""
                 if plyr["status"] is "":
-                    plyr["position_type"] = next_item["position_type"]
+                    plyr["editorial_team_abbr"] = next_item["editorial_team_abbr"]
                 else:
-                    plyr["position_type"] = next(it)["position_type"]
+                    plyr["editorial_team_abbr"] = next(it)["editorial_team_abbr"]
+
+                plyr["position_type"] = next(it)["position_type"]
                 plyr["eligible_positions"] = _compact_eligible_pos(next(it))
                 plyr["selected_position"] = _compact_selected_pos(next(it))
 

@@ -24,6 +24,7 @@ class League:
         self.week_date_range_cache = {}
         self.free_agent_cache = {}
         self.waivers_cache = None
+        self.waivers_cache1 = None
         self.stat_categories_cache = None
         self.settings_cache = None
         self.edit_date_cache = None
@@ -324,7 +325,7 @@ class League:
         for i, pct_own in zip(range(0, t.execute('$..players.count[0]')*2, 2),
                               pct_owns):
             path = '$..players..player[{}].'.format(i) + \
-                "(name,player_id,position_type,status,eligible_positions)"
+                "(name,player_id,position_type,status,eligible_positions,editorial_team_abbr)"
             obj = list(t.execute(path))
             plyr = {}
             # Convert obj from a list of dicts to a single one-dimensional dict
@@ -333,6 +334,7 @@ class League:
                     plyr[k] = ele[k]
             plyr['player_id'] = int(plyr['player_id'])
             plyr['name'] = plyr['name']['full']
+            plyr['team_abbr'] = plyr['editorial_team_abbr']
             # We want to return eligible positions in a concise format.
             plyr['eligible_positions'] = [e['position'] for e in
                                           plyr['eligible_positions']]
@@ -671,3 +673,118 @@ class League:
                 1001: 'PPT', 1002: 'Avg-PPT', 1003: 'SHT', 1004: 'Avg-SHT',
                 1005: 'COR', 1006: 'FEN', 1007: 'Off-ZS', 1008: 'Def-ZS',
                 1009: 'ZS-Pct', 1010: 'GStr', 1011: 'Shifts'}
+
+    def waivers1(self):
+        """Return the free agents for the given position
+
+               :param position: All free agents must be able to play this position.
+                    Use the short code of the position (e.g. 2B, C, etc.).  You can
+                    also specify the position type (e.g. 'B' for all batters and 'P'
+                    for all pitchers).
+               :type position: str
+               :return: Free agents found. Particulars about each free agent will be
+                    returned.
+               :rtype: List(Dict)
+
+               >>> fa_CF = lg.free_agents('CF')
+               >>> len(fa_CF)
+               60
+               >>> fa_CF[0]
+               {'player_id': 8370,
+                'name': 'Dexter Fowler',
+                'position_type': 'B',
+                'eligible_positions': ['CF', 'RF', 'Util']}
+               """
+        if self.waivers_cache1 is None:
+            self._cache_waivers1()
+        return self.waivers_cache1
+
+    def _cache_waivers1(self):
+        # The Yahoo! API we use doles out players 25 per page.  We need to make
+        # successive calls to gather all of the players.  We stop when we fetch
+        # less then 25.
+        PLAYERS_PER_PAGE = 25
+        self.waivers_cache1 = []
+        plyrIndex = 0
+        while plyrIndex % PLAYERS_PER_PAGE == 0:
+            j = self.yhandler.get_players_raw(self.league_id, plyrIndex, 'W', sub_resource='ownership')
+            (num_plyrs_on_pg, plyrs_on_pg) = self._waivers_from_page1(j)
+            if len(plyrs_on_pg) == 0:
+                break
+            self.waivers_cache1 += plyrs_on_pg
+            plyrIndex += num_plyrs_on_pg
+
+    def _waivers_from_page1(self, page):
+        """Extract the free agents from a given JSON page
+
+        :param page: JSON page to extract free agents from
+        :type page: dict
+        :return: A tuple returning the number of players on the page, and the
+        list of free agents extracted from the page.
+        :rtype: (int, list(dict))
+        """
+        fa = []
+
+        if len(page['fantasy_content']['league'][1]['players']) == 0:
+            return (0, fa)
+
+        t = objectpath.Tree(page)
+        waiver_dates = self._ownership_from_waivers(iter(list(t.execute(
+            '$..ownership.(ownership_type,waiver_date)'))))
+        # When iterating over the players we step by 2 to account for the
+        # percent_owned data that is stored adjacent to each player.
+        for i, waiver_date in zip(range(0, t.execute('$..players.count[0]') * 2, 2),
+                                  waiver_dates):
+            path = '$..players..player[{}].'.format(i) + \
+                   "(name,player_id,position_type,status,eligible_positions,editorial_team_abbr)"
+            obj = list(t.execute(path))
+            plyr = {}
+            # Convert obj from a list of dicts to a single one-dimensional dict
+            for ele in obj:
+                for k in ele.keys():
+                    plyr[k] = ele[k]
+            plyr['player_id'] = int(plyr['player_id'])
+            plyr['name'] = plyr['name']['full']
+            try:
+                plyr['team_abbr'] = plyr['editorial_team_abbr']
+            except KeyError:
+                pass
+            # We want to return eligible positions in a concise format.
+            plyr['eligible_positions'] = [e['position'] for e in
+                                          plyr['eligible_positions']]
+            plyr['waiver_date'] = waiver_date
+            if "status" not in plyr:
+                plyr["status"] = ""
+
+            # Ignore players that are not active
+            if plyr["status"] != "NA":
+                fa.append(plyr)
+        return (i / 2 + 1, fa)
+
+    def _ownership_from_waivers(self, po_it):
+        """Extract the ownership % of players taken from a free agent JSON
+
+        Why does this function even need to exist?  When requesting ownership
+        percentage when getting free agents, the ownership percentage is
+        included adjacent to the rest of the player data.  So it cannot be
+        retrieved easily along side the player data and must be extracted
+        separately.
+
+        :param po_it: Extracted ownership % from objectpath
+        :type eles: iterator over a list
+        :return: Ownership percentages of each player on the JSON page
+        :rtype: list(int)
+        """
+        po = []
+        i = 0
+        try:
+            while True:
+                ele = next(po_it)
+                if "ownership_type" in ele:
+                    po.append(0)
+                    i += 1
+                if "waiver_date" in ele:
+                    po[i - 1] = ele['waiver_date']
+        except StopIteration:
+            pass
+        return po

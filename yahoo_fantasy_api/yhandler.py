@@ -132,7 +132,7 @@ class YHandler:
             week_uri = ";week={}".format(week)
         return self.get("league/{}/scoreboard{}".format(league_id, week_uri))
 
-    def get_players_raw(self, league_id, start, status, position=None):
+    def get_players_raw(self, league_id, start, status, position=None, sub_resource='percent_owned'):
         """Return the raw JSON when requesting players in the league
 
         The result is limited to 25 players.
@@ -157,9 +157,10 @@ class YHandler:
             pos_parm = ""
         else:
             pos_parm = ";position={}".format(position)
+
         return self.get(
-            "league/{}/players;start={};count=25;status={}{}/percent_owned".
-            format(league_id, start, status, pos_parm))
+            "league/{}/players;start={};count=25;status={}{}{}".
+                format(league_id, start, status, pos_parm, '/' + sub_resource))
 
     def get_player_raw(self, league_id, player_name):
         """Return the raw JSON when requesting player details
