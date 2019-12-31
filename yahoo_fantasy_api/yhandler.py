@@ -293,3 +293,17 @@ class YHandler:
             return "type={}".format(req_type)
         else:
             assert(False), "Unknown req_type type: {}".format(req_type)
+
+    def get_standings_raw(self, league_id, week=None):
+        """Return the raw JSON when requesting the scoreboard for a week
+
+        :param league_id: League ID to get the standings for
+        :type league_id: str
+        :param week: The week number to request the scoreboard for
+        :type week: int
+        :return: JSON document of the request.
+        """
+        week_uri = ""
+        if week is not None:
+            week_uri = ";week={}".format(week)
+        return self.get("league/{}/standings{}".format(league_id, week_uri))

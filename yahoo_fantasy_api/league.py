@@ -788,3 +788,14 @@ class League:
         except StopIteration:
             pass
         return po
+
+    #https://fantasysports.yahooapis.com/fantasy/v2/league/223.l.431/standings
+    def standings(self):
+        j = self.yhandler.get_standings_raw(self.league_id)
+        pass
+        return j
+
+    def scoreboard(self, week=None):
+        if week is None:
+            week = self.current_week()
+        return self.yhandler.get_scoreboard_raw(self.league_id, week)
