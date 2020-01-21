@@ -23,6 +23,7 @@ class League:
         self.end_week_cache = None
         self.week_date_range_cache = {}
         self.free_agent_cache = {}
+        self.all_player_cache = None
         self.waivers_cache = None
         self.waivers_cache1 = None
         self.stat_categories_cache = None
@@ -215,6 +216,11 @@ class League:
                                "past the current week.  The requested week is "
                                "{}, but current week is {}.".format(
                                    week, self.current_week()))
+
+    def all_players(self):
+        if self.all_player_cache is None:
+            self.all_player_cache = self._fetch_players('ALL')
+        return self.all_player_cache
 
     def free_agents(self, position):
         """Return the free agents for the given position
