@@ -805,3 +805,27 @@ class League:
         if week is None:
             week = self.current_week()
         return self.yhandler.get_scoreboard_raw(self.league_id, week)
+
+    def draft_results(self):
+        ''''''
+        json = self.yhandler.get_draft_results(self.league_id)
+        t = objectpath.Tree(json)
+        elems = t.execute('$..draft_result')
+        teams = []
+        for ele in elems:
+            teams.append(ele)
+        # for team, ele in zip(teams, t.execute('$..teams..(team_key)')):
+        #     team['team_key'] = ele['team_key']
+        return teams
+
+    def transactions(self):
+        ''''''
+        json = self.yhandler.get_transactions(self.league_id)
+        t = objectpath.Tree(json)
+        elems = t.execute('$..transaction')
+        teams = []
+        for ele in elems:
+            teams.append(ele)
+        # for team, ele in zip(teams, t.execute('$..teams..(team_key)')):
+        #     team['team_key'] = ele['team_key']
+        return teams

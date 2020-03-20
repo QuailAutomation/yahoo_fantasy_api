@@ -307,3 +307,19 @@ class YHandler:
         if week is not None:
             week_uri = ";week={}".format(week)
         return self.get("league/{}/standings{}".format(league_id, week_uri))
+
+    def get_transactions(self, league_id):
+        """Return the raw JSON when requesting the scoreboard for a week
+
+        :param league_id: League ID to get the standings for
+        :type league_id: str
+        :param week: The week number to request the scoreboard for
+        :type week: int
+        :return: JSON document of the request.
+        """
+
+        return self.get("league/{}/transactions".format(league_id))
+
+    def get_draft_results(self, league_id):
+        # /fantasy/v2/league/{league_key}/draftresults
+        return self.get("league/{}/draftresults".format(league_id))
