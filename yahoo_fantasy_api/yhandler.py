@@ -11,6 +11,15 @@ class YHandler:
     def __init__(self, sc):
         self.sc = sc
 
+    def __getattribute__(self, attr):
+        cred = super(YHandler, self).__getattribute__(attr)
+        if attr == 'sc':
+            if not cred.token_is_valid():
+                cred.refresh_access_token()
+                # bug in yahoo-auth, does not update session when access token updated
+                cred.session = cred.oauth.get_session(token=cred.access_token)
+        return cred
+
     def get(self, uri):
         """Send an API request to the URI and return the response as JSON
 
