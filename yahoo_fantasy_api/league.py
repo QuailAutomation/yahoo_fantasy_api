@@ -301,8 +301,8 @@ class League:
             j = self.yhandler.get_players_raw(self.league_id, plyrIndex,
                                               status, position=position)
             (num_plyrs_on_pg, fa_on_pg) = self._players_from_page(j)
-            if len(fa_on_pg) == 0:
-                break
+            # if len(fa_on_pg) == 0:
+            #     break
             plyrs += fa_on_pg
             plyrIndex += num_plyrs_on_pg
         return plyrs
