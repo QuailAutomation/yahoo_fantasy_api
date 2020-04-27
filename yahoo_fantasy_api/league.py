@@ -301,9 +301,10 @@ class League:
             j = self.yhandler.get_players_raw(self.league_id, plyrIndex,
                                               status, position=position)
             (num_plyrs_on_pg, fa_on_pg) = self._players_from_page(j)
-            # if len(fa_on_pg) == 0:
-            #     break
-            plyrs += fa_on_pg
+            if len(fa_on_pg) == 0:
+                break
+            # Ignore players that are not active
+            plyrs += [fa for fa in fa_on_pg if fa["status"] != "NA"]
             plyrIndex += num_plyrs_on_pg
         return plyrs
 
@@ -347,10 +348,8 @@ class League:
             plyr['percent_owned'] = pct_own
             if "status" not in plyr:
                 plyr["status"] = ""
+            fa.append(plyr)
 
-            # Ignore players that are not active
-            if plyr["status"] != "NA":
-                fa.append(plyr)
         return (i/2 + 1, fa)
 
     def _pct_owned_from_page(self, po_it):
@@ -819,7 +818,7 @@ class League:
         return teams
 
     def transactions(self):
-        ''''''
+        '''Load transactions for league.'''
         json = self.yhandler.get_transactions(self.league_id)
         t = objectpath.Tree(json)
         elems = t.execute('$..transaction')
