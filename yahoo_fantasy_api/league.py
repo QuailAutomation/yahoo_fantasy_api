@@ -812,7 +812,10 @@ class League:
         elems = t.execute('$..draft_result')
         teams = []
         for ele in elems:
-            teams.append(ele)
+            if 'player_key' in ele.keys():
+                teams.append(ele)
+            else:
+                break
         # for team, ele in zip(teams, t.execute('$..teams..(team_key)')):
         #     team['team_key'] = ele['team_key']
         return teams
