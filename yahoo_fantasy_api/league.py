@@ -113,11 +113,13 @@ class League:
             t = objectpath.Tree(json)
             settings_to_return = """
             name, scoring_type,
-            start_week, current_week, end_week,start_date, end_date,
-            game_code, season
+            start_week, current_week, end_week,start_date, end_date, edit_key, 
+            game_code, season, league_update_timestamp
             """
             self.settings_cache = t.execute(
                 '$.fantasy_content.league.({})[0]'.format(settings_to_return))
+            additional_info = t.execute('$.fantasy_content.league[1].settings.(waiver_time, max_weekly_adds)[0]')
+            self.settings_cache.update(additional_info)
         return self.settings_cache
 
     def stat_categories(self):
